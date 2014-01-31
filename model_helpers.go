@@ -5,7 +5,6 @@
 // of this library, but other helpers may show up in the future.
 package model_helpers
 
-
 import (
 	"errors"
 	"github.com/stretchr/objx"
