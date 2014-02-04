@@ -1,9 +1,9 @@
 // I don't yet know what to name this, so I'm picking something
-// entirely boring.  The model_helpers package (as I have chosen to
+// entirely boring.  The web_request_readers package (as I have chosen to
 // name it for the time being) includes some helper functions for
 // dealing with models.  UnmarshalParams is the big utility function
 // of this library, but other helpers may show up in the future.
-package model_helpers
+package web_request_readers
 
 import (
 	"errors"

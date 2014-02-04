@@ -1,4 +1,4 @@
-package model_helpers
+package web_request_readers
 
 // A RequestValueReceiver is a type that receives a value from a
 // request and performs its own logic to parse that value to a value

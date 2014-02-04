@@ -1,4 +1,4 @@
-package model_helpers
+package web_request_readers
 
 import (
 	"encoding/json"
