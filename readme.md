@@ -61,10 +61,25 @@ type Test struct {
     Name string
     NeedsUnderscores string `response:"needs_underscores"`
     RequestDifferentThanResponse string `response:"foo" request:"bar"`
-    IgnoredInRequestButNotResponse string `response:"foo" request:"-"`
-    IgnoredInResponseButNotRequest string `response:"-" request:"bar"
+    IgnoredInRequestButNotResponse string `response:"bar" request:"-"`
+    IgnoredInResponseButNotRequest string `response:"-" request:"baz"
 }
 ```
+
+The expected request body (in `application/json` format) to fill a
+Test struct would look about like this:
+
+```
+{
+  "name": "foo",
+  "needs_underscores": "bar",
+  "bar": "bacon",
+  "baz": "eggs"
+}
+```
+
+Note that `Test.IgnoredInRequestButNotResponse` won't be receiving any
+values, since it has a "request" tag of "-".
 
 _Converting a Value From a Request to a Go Value_
 
