@@ -1,4 +1,4 @@
-package model_helpers
+package rest_grab
 
 import (
 	"strings"
