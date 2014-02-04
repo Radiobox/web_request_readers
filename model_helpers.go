@@ -108,7 +108,13 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 // setValue takes a target and a value, and updates the target to
 // match the value.
 func setValue(target reflect.Value, value interface{}) (parseErr error) {
-	if receiver, ok := target.Interface().(Receiver); ok {
+	receiver, ok := target.Interface().(Receiver)
+	if !ok && target.CanAddr() {
+		// Try again with the pointer
+		receiver, ok = target.Addr().Interface().(Receiver)
+	}
+
+	if ok {
 		parseErr = receiver.Receive(value)
 	} else {
 		targetTypeName := target.Type().Name()
