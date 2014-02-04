@@ -1,4 +1,4 @@
-package grabber
+package rest_grab
 
 // A Receiver is a type that performs its own logic related to
 // receiving data from a request.  This is useful for password types
