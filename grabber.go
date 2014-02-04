@@ -111,7 +111,7 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	receiver, ok := target.Interface().(Receiver)
 	if !ok && target.CanAddr() {
 		// Try again with the pointer
-		receiver, ok = target.Addr().Interface().(Receiver)
+		puller, ok = target.Addr().Interface().(Puller)
 	}
 
 	if ok {
