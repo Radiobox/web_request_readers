@@ -3,6 +3,10 @@
 This package contains several request parser functions that we've
 found to be useful in much of our web code.
 
+*Note*: We use github.com/stretchr/goweb as our web framework, so you
+ will see this project importing some of stretchr's projects.  This
+ project should work just fine outside of goweb, though.
+
 #### Parsing Parameters
 
 The ParseParams function can be used to parse parameters from a
@@ -42,13 +46,13 @@ parameters:
 
 *Note 2*: Unexported fields are always ignored.
 
-1. Read in the value for the "request" struct tag.
-2. Read in the valuee for the "response" struct tag.  We assume that
+1. Use the value of the "request" struct tag.
+2. Use the value of the "response" struct tag.  We assume that
    if a value should be used as something in a response, it's *likely*
    that it should be the same in a request.  If this is not the
-   desired behavior, simply use the "request" tag in addition, since
-   the "request" tag is preferred.
-3. Read the struct field's name and convert it to lower case.
+   desired behavior, simply use the "request" tag to override the use
+   of the "response" tag.
+3. Convert the field's name to lower case and use that.
 
 *Example*:
 
