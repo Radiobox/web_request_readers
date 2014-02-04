@@ -3,7 +3,7 @@
 // name it for the time being) includes some helper functions for
 // dealing with models.  UnmarshalParams is the big utility function
 // of this library, but other helpers may show up in the future.
-package model_helpers
+package rest_grab
 
 import (
 	"errors"
