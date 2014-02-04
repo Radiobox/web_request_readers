@@ -3,7 +3,7 @@
 // name it for the time being) includes some helper functions for
 // dealing with models.  UnmarshalParams is the big utility function
 // of this library, but other helpers may show up in the future.
-package model_helpers
+package rest_grab
 
 import (
 	"errors"
@@ -111,7 +111,7 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	receiver, ok := target.Interface().(Receiver)
 	if !ok && target.CanAddr() {
 		// Try again with the pointer
-		receiver, ok = target.Addr().Interface().(Receiver)
+		puller, ok = target.Addr().Interface().(Puller)
 	}
 
 	if ok {
