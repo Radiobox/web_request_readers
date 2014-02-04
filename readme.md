@@ -30,9 +30,9 @@ parameter map to the fields on the struct.
 ##### Tags and Interfaces
 
 The UnmarshalParams function uses interfaces and field tags for
-determining how it should determine which value in a request should be
-assigned to which field in a struct, and how those values should be
-converted.  The following are currently supported:
+determining which value in a request should be assigned to which field
+in a struct, and how those values should be converted.  The following
+are currently supported:
 
 _Determining the Source Value From the Request_
 
