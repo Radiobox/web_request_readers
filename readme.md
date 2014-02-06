@@ -1,4 +1,4 @@
-### Web Request Parsers
+## Web Request Parsers
 
 This package contains several request parser functions that we've
 found to be useful in much of our web code.
@@ -7,7 +7,7 @@ found to be useful in much of our web code.
  will see this project importing some of stretchr's projects.  This
  project should work just fine outside of goweb, though.
 
-#### Parsing Parameters
+### Parsing Parameters
 
 The ParseParams function can be used to parse parameters from a
 request body into a generic objx.Map.  It currently only supports
@@ -20,21 +20,21 @@ for any keys in the request that contain only a single value.  This
 can be a problem for any requests where a single value is passed, but
 more are allowed.  My suggestion: don't use x-www-form-urlencoded.
 
-#### Converting Parameters to a Model
+### Converting Parameters to a Model
 
 The most useful function that this package provides, in my opinion, is
 UnmarshalParams.  It takes an objx.Map of parameters and a target
 model (or any generic struct, really), and sends the values in the
 parameter map to the fields on the struct.
 
-##### Tags and Interfaces
+#### Tags and Interfaces
 
 The UnmarshalParams function uses interfaces and field tags for
 determining which value in a request should be assigned to which field
 in a struct, and how those values should be converted.  The following
 are currently supported:
 
-_Determining the Source Value From the Request_
+##### _Determining the Source Value From the Request_
 
 UnmarshalParams uses the following method to determine which key to
 use for a struct field when looking up a source value in the request
@@ -81,7 +81,7 @@ Test struct would look about like this:
 Note that `Test.IgnoredInRequestButNotResponse` won't be receiving any
 values, since it has a "request" tag of "-".
 
-_Converting a Value From a Request to a Go Value_
+##### _Converting a Value From a Request to a Go Value_
 
 Sometimes, a request value needs to be converted or validated before
 it can be assigned to a Go value.  To do that, just match the
@@ -117,6 +117,7 @@ func (email *Email) Receive(rawEmail interface{}) error {
         return errors.New("Email is not valid")
     }
     *email = emailStr
+    return nil
 }
 
 type User struct {
