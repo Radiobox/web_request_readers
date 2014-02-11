@@ -1,8 +1,7 @@
-// I don't yet know what to name this, so I'm picking something
-// entirely boring.  The web_request_readers package (as I have chosen to
-// name it for the time being) includes some helper functions for
-// dealing with models.  UnmarshalParams is the big utility function
-// of this library, but other helpers may show up in the future.
+// The web_request_readers package (as I have chosen to name it for
+// the time being) includes some helper functions for dealing with
+// models.  UnmarshalParams is the big utility function of this
+// library, but other helpers may show up in the future.
 package web_request_readers
 
 import (
@@ -25,12 +24,15 @@ const (
 )
 
 // UnmarshalParams takes a series of parameters and unmarshals them to
-// a model.  The key used to load the correct value for a field in
-// target is determined as follows:
+// the exported fields of a struct.  The key used to load a value from
+// a request for a field is determined as follows:
 //
-// 1. If the field has a 'request' tag, it is used.
-// 2. If the field has a 'response' tag, it is used.
-// 3. Otherwise, the field name is converted to lowercase and used.
+// 1. If the field has a 'request' tag, its value is used as the key.
+//
+// 2. Else if the field has a 'response' tag, its value is used as the
+// key.
+//
+// 3. Else the field name is converted to lowercase and used as the key.
 //
 // If a tag is found and has a value of "-", the field will be
 // skipped.
@@ -38,12 +40,43 @@ const (
 // The target value *must* be a pointer to a struct, or the function
 // will panic.
 //
-// Errors that should be interpreted as a bad request will be generic
-// errors; otherwise, a MissingFields error will be returned, stating
-// which fields exist in the model but not in the request.  This
-// allows you to ignore errors of type MissingFields if you don't care
-// whether or not all fields in the model have values in the params
-// map.
+// The returned error will be nil if there was a value in the request
+// that matched every parseable (i.e. exported field not tagged with
+// "-") field in the struct.
+//
+// If all values from the request were matched by struct fields, but
+// some struct fields had no matching values in the request, the
+// returned error will be of type MissingFields.  This allows you to
+// test for this type, for cases where you don't need the entire model
+// populated during a request.
+//
+// If there were values in the request that could not be matched to
+// fields in the struct, or if any other unexpected error happens, the
+// return value will be a generic error type.
+//
+// A simple example:
+//
+//     type Example struct {
+//         Foo string
+//         Bar string `response:"baz"`
+//         Baz string `response:"-"`
+//         Bacon string `response:"-" request:"bacon"`
+//     }
+//
+//     func CreateExample(params objx.Map) (*Example, error) {
+//         target := new(Example)
+//         if err := UnmarshalParams(params, target); err != nil {
+//             // In this request, we don't care if fields are
+//             // missing.  You can also check MissingFields.Names for
+//             // which values were missing in the request - for
+//             // example, in case you care about Foo being missing,
+//             // but don't care about Bacon.
+//             if missing, ok := err.(MissingFields); !ok {
+//                 return nil, err
+//             }
+//         }
+//         return target, nil
+//     }
 func UnmarshalParams(params objx.Map, target interface{}) error {
 	ptrValue := reflect.ValueOf(target)
 	targetValue := ptrValue.Elem()

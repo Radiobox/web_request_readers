@@ -6,11 +6,11 @@ package web_request_readers
 //
 // An example of one possible use for this interface:
 //
-// type Password string
+//     type Password string
 //
-// func (password *Password) Receive(rawPassword interface{}) error {
-//     *password = hash(rawPassword.(string))
-// }
+//     func (password *Password) Receive(rawPassword interface{}) error {
+//         *password = hash(rawPassword.(string))
+//     }
 type RequestValueReceiver interface {
 
 	// Receive takes a value and attempts to read it in to the
