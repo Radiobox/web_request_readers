@@ -61,7 +61,7 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 func ParsePage(params objx.Map, defaultPageSize int) (offset, limit int, err error) {
 	limit = defaultPageSize
 
-	sizeVal, sizeOk := params["pageSize"]
+	sizeVal, sizeOk := params["page_size"]
 	pageVal, pageOk := params["page"]
 
 	if sizeOk {
