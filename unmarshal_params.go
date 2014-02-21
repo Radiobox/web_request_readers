@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
+	"strconv"
 )
 
 const (
@@ -165,7 +166,66 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 				target = typeVal
 			}
 		}
-		target.Set(reflect.ValueOf(value))
+		switch target.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			parseErr = setInt(target, value)
+		case reflect.Float32, reflect.Float64:
+			parseErr = setFloat(target, value)
+		default:
+			target.Set(reflect.ValueOf(value))
+		}
 	}
 	return
+}
+
+func setInt(target reflect.Value, value interface{}) error {
+	switch src := value.(type) {
+	case string:
+		intVal, err := strconv.ParseInt(src, 10, 64)
+		if err != nil {
+			return err
+		}
+		target.SetInt(intVal)
+	case int:
+		target.SetInt(int64(src))
+	case int8:
+		target.SetInt(int64(src))
+	case int16:
+		target.SetInt(int64(src))
+	case int32:
+		target.SetInt(int64(src))
+	case int64:
+		target.SetInt(src)
+	case float32:
+		target.SetInt(int64(src))
+	case float64:
+		target.SetInt(int64(src))
+	}
+	return nil
+}
+
+func setFloat(target reflect.Value, value interface{}) error {
+	switch src := value.(type) {
+	case string:
+		floatVal, err := strconv.ParseFloat(src, 64)
+		if err != nil {
+			return err
+		}
+		target.SetFloat(floatVal)
+	case int:
+		target.SetFloat(float64(src))
+	case int8:
+		target.SetFloat(float64(src))
+	case int16:
+		target.SetFloat(float64(src))
+	case int32:
+		target.SetFloat(float64(src))
+	case int64:
+		target.SetFloat(float64(src))
+	case float32:
+		target.SetFloat(float64(src))
+	case float64:
+		target.SetFloat(src)
+	}
+	return nil
 }

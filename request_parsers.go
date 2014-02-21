@@ -53,45 +53,38 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 
 // ParsePage reads "page" and "page_size" from a set of parameters and
 // parses them into offset and limit values.
+//
+// It assumes that the params will be coming from a set of query
+// parameters, and that the page and page_size values will be of type
+// []string, since that's the default for query parameters.  It will
+// simply read the first value from each slice, ignoring extra values.
 func ParsePage(params objx.Map, defaultPageSize int) (offset, limit int, err error) {
 	limit = defaultPageSize
 
 	sizeVal, sizeOk := params["pageSize"]
 	pageVal, pageOk := params["page"]
-	if !pageOk || !sizeOk {
-		return
-	}
 
-	var page, pageSize int
-	switch sizeVal := sizeVal.(type) {
-	case string:
-		pageSize, err = strconv.Atoi(sizeVal)
+	if sizeOk {
+		sizeSlice := sizeVal.([]string)
+		sizeStr := sizeSlice[0]
+		var pageSize int
+		pageSize, err = strconv.Atoi(sizeStr)
 		if err != nil {
 			return
 		}
-	case int:
-		pageSize = sizeVal
-	case int32:
-		pageSize = int(sizeVal)
-	case int64:
-		pageSize = int(sizeVal)
+		limit = pageSize
 	}
 
-	switch pageVal := pageVal.(type) {
-	case string:
-		page, err = strconv.Atoi(pageVal)
+	if pageOk {
+		pageSlice := pageVal.([]string)
+		pageStr := pageSlice[0]
+		var page int
+		page, err = strconv.Atoi(pageStr)
 		if err != nil {
 			return
 		}
-	case int:
-		page = pageVal
-	case int32:
-		page = int(pageVal)
-	case int64:
-		page = int(pageVal)
+		offset = (page - 1) * limit
 	}
 
-	offset = (page - 1) * pageSize
-	limit = pageSize
 	return
 }
