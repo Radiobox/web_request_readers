@@ -95,6 +95,35 @@ func UnmarshalParams(params objx.Map, target interface{}) error {
 	return nil
 }
 
+func getNextOption(remainingTag string) (string, string) {
+	commaIdx := strings.IndexRune(remainingTag, ',')
+	if commaIdx == -1 {
+		return remainingTag, ""
+	}
+	nextOption := remainingTag[:commaIdx]
+	remaining := remainingTag[commaIdx:]
+	for len(remaining) > 0 && remaining[0] == ',' {
+		remaining = remaining[1:]
+	}
+	return nextOption, remaining
+}
+
+func getTagAndArgs(fieldType reflect.StructField) (string, []string) {
+	tag := fieldType.Tag.Get("request")
+	if tag == "" {
+		tag = fieldType.Tag.Get("response")
+	}
+
+	name, remaining := getNextOption(tag)
+	args := make([]string, 0, 5)
+	var next string
+	for remaining != "" {
+		next, remaining = getNextOption(remaining)
+		args = append(args, next)
+	}
+	return name, args
+}
+
 // unmarshalToValue is a helper for UnmarshalParams, which keeps track
 // of the total number of fields matched in a request and which fields
 // were missing from a request.
@@ -115,11 +144,7 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 
 		// Skip unexported fields
 		if unicode.IsUpper(rune(fieldType.Name[0])) {
-
-			name := fieldType.Tag.Get("request")
-			if name == "" {
-				name = fieldType.Tag.Get("response")
-			}
+			name, args := getTagAndArgs(fieldType)
 			switch name {
 			case "-":
 				continue
@@ -127,10 +152,16 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 				name = strings.ToLower(fieldType.Name)
 				fallthrough
 			default:
+				required := true
+				for _, arg := range args {
+					if arg == "optional" {
+						required = false
+					}
+				}
 				if value, ok := params[name]; ok {
 					matchedFields++
 					parseErr = setValue(field, value)
-				} else {
+				} else if required {
 					missingErr.AddMissingField(name)
 				}
 			}
