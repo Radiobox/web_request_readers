@@ -129,16 +129,13 @@ func getTagAndArgs(fieldType reflect.StructField) (string, []string) {
 // were missing from a request.
 func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *MissingFields) (matchedFields int, parseErr error) {
 	targetType := targetValue.Type()
-	for i := 0; i < targetValue.NumField(); i++ {
+	for i := 0; i < targetValue.NumField() && parseErr == nil; i++ {
 		field := targetValue.Field(i)
 		fieldType := targetType.Field(i)
 		if fieldType.Anonymous {
-			embeddedCount, err := unmarshalToValue(params, field, missingErr)
+			var embeddedCount int
+			embeddedCount, parseErr = unmarshalToValue(params, field, missingErr)
 			matchedFields += embeddedCount
-			if err != nil {
-				parseErr = err
-				return
-			}
 			continue
 		}
 
@@ -180,31 +177,30 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	}
 
 	if ok {
-		parseErr = receiver.Receive(value)
-	} else {
-		targetTypeName := target.Type().Name()
-		if target.Kind() == reflect.Struct && strings.HasPrefix(targetTypeName, SqlNullablePrefix) {
-			// database/sql defines many Null* types,
-			// where the fields are Valid (a bool) and the
-			// name of the type (everything after Null).
-			// We're trying to support them (somewhat)
-			// here.
-			typeName := targetTypeName[len(SqlNullablePrefix):]
-			typeVal := target.FieldByName(typeName)
-			notNullVal := target.FieldByName(SqlNotNullField)
-			if typeVal.IsValid() && notNullVal.IsValid() {
-				notNullVal.Set(reflect.ValueOf(value != nil))
-				target = typeVal
-			}
+		return receiver.Receive(value)
+	}
+	targetTypeName := target.Type().Name()
+	if target.Kind() == reflect.Struct && strings.HasPrefix(targetTypeName, SqlNullablePrefix) {
+		// database/sql defines many Null* types,
+		// where the fields are Valid (a bool) and the
+		// name of the type (everything after Null).
+		// We're trying to support them (somewhat)
+		// here.
+		typeName := targetTypeName[len(SqlNullablePrefix):]
+		typeVal := target.FieldByName(typeName)
+		notNullVal := target.FieldByName(SqlNotNullField)
+		if typeVal.IsValid() && notNullVal.IsValid() {
+			notNullVal.Set(reflect.ValueOf(value != nil))
+			target = typeVal
 		}
-		switch target.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			parseErr = setInt(target, value)
-		case reflect.Float32, reflect.Float64:
-			parseErr = setFloat(target, value)
-		default:
-			target.Set(reflect.ValueOf(value))
-		}
+	}
+	switch target.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		parseErr = setInt(target, value)
+	case reflect.Float32, reflect.Float64:
+		parseErr = setFloat(target, value)
+	default:
+		target.Set(reflect.ValueOf(value))
 	}
 	return
 }
