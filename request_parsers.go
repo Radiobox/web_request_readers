@@ -15,7 +15,7 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 		return params.(objx.Map), nil
 	}
 	request := ctx.HttpRequest()
-	response := objx.Map(make(map[string]interface{}))
+	response := make(objx.Map)
 	switch request.Header.Get("Content-Type") {
 	case "text/json":
 		fallthrough
@@ -27,10 +27,12 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 		if err = json.Unmarshal(body, &response); err != nil {
 			return nil, err
 		}
+	case "multipart/form-data":
+		request.ParseMultipartForm()
+		fallthrough
 	default:
 		fallthrough
 	case "application/x-www-form-urlencoded":
-		// Assume form.
 		request.ParseForm()
 		for index, values := range request.Form {
 			if len(values) == 1 {
