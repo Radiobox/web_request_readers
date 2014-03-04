@@ -27,10 +27,9 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 		if err = json.Unmarshal(body, &response); err != nil {
 			return nil, err
 		}
-	case "multipart/form-data":
-		request.ParseMultipartForm()
-		fallthrough
 	default:
+		fallthrough
+	case "multipart/form-data":
 		fallthrough
 	case "application/x-www-form-urlencoded":
 		request.ParseForm()
