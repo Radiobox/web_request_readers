@@ -42,6 +42,7 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 	case "application/x-www-form-urlencoded":
 		fallthrough
 	case "multipart/form-data":
+		request.ParseMultipartForm(MultipartMem())
 		if request.MultipartForm != nil {
 			response.Set("files", request.MultipartForm.File)
 			for key, values := range request.MultipartForm.Value {
