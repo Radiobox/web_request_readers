@@ -8,6 +8,16 @@ import (
 	"strconv"
 )
 
+var multipartMem int64 = 2 << 20 * 10
+
+func MultipartMem() int64 {
+	return multipartMem
+}
+
+func SetMultipartMem(mem int64) {
+	multipartMem = mem
+}
+
 func ParseParams(ctx context.Context) (objx.Map, error) {
 	if params, ok := ctx.Data()["params"]; ok {
 		// We've already parsed this request, so return the cached
@@ -29,10 +39,19 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 		}
 	default:
 		fallthrough
-	case "multipart/form-data":
-		fallthrough
 	case "application/x-www-form-urlencoded":
-		request.ParseForm()
+		fallthrough
+	case "multipart/form-data":
+		if request.MultipartForm != nil {
+			response.Set("files", request.MultipartForm.File)
+			for key, values := range request.MultipartForm.Value {
+				if len(values) == 1 {
+					response.Set(key, values[0])
+				} else {
+					response.Set(key, values)
+				}
+			}
+		}
 		for index, values := range request.Form {
 			if len(values) == 1 {
 				// Okay, so, here's how this works.  I hate just
