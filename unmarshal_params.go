@@ -110,11 +110,14 @@ func getNextOption(remainingTag string) (string, string) {
 
 func getTagAndArgs(fieldType reflect.StructField) (string, []string) {
 	tag := fieldType.Tag.Get("request")
-	if tag == "" {
-		tag = fieldType.Tag.Get("response")
-	}
 
-	name, remaining := getNextOption(tag)
+	// This is for situations like `response:"test" request:",option"`
+	name := fieldType.Tag.Get("response")
+
+	requestName, remaining := getNextOption(tag)
+	if requestName != "" {
+		name = requestName
+	}
 	args := make([]string, 0, 5)
 	var next string
 	for remaining != "" {
