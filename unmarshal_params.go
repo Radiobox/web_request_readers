@@ -115,7 +115,10 @@ func getTagAndArgs(fieldType reflect.StructField) (string, []string) {
 	// - it will be overridden by the request tag
 	name := fieldType.Tag.Get("response")
 	if name == "" {
-		name = fieldType.Tag.Get("db")
+		// Fall back to db tag if it isn't "-"
+		if dbName := fieldType.Tag.Get("db"); dbName != "-" {
+			name = dbName
+		}
 	}
 
 	requestName, remaining := getNextOption(tag)
