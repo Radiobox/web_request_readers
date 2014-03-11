@@ -170,6 +170,8 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 					parseErr = setValue(field, value)
 				} else if required {
 					missingErr.AddMissingField(name)
+				} else if defaulter, ok := field.Interface().(DefaultValueCreator); ok {
+					setValue(field, defaulter.DefaultValue())
 				}
 			}
 		}
