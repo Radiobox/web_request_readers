@@ -3,6 +3,7 @@ package web_request_readers
 import (
 	"encoding/json"
 	"github.com/stretchr/goweb/context"
+	codec_services "github.com/stretchr/codecs/services"
 	"github.com/stretchr/objx"
 	"io/ioutil"
 	"strconv"
@@ -26,7 +27,12 @@ func ParseParams(ctx context.Context) (objx.Map, error) {
 	}
 	request := ctx.HttpRequest()
 	response := make(objx.Map)
-	switch request.Header.Get("Content-Type") {
+	contentType, _ := codec_services.ParseContentType(request.Header.Get("Content-Type"))
+	var mimeType string
+	if contentType != nil {
+		mimeType = contentType.MimeType
+	}
+	switch mimeType {
 	case "text/json":
 		fallthrough
 	case "application/json":
