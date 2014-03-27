@@ -212,7 +212,7 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	case reflect.Float32, reflect.Float64:
 		parseErr = setFloat(target, value)
 	default:
-		target.Set(reflect.ValueOf(value))
+		target.Set(reflect.ValueOf(value).Convert(target.Type()))
 	}
 	return
 }
