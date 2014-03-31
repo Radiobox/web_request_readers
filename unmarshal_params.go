@@ -209,6 +209,11 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	case reflect.Float32, reflect.Float64:
 		parseErr = setFloat(target, value)
 	default:
+		inputType := reflect.TypeOf(value)
+		if !inputType.ConvertibleTo(target.Type()) {
+			parseErr = errors.New("Cannot convert value to target type")
+			return
+		}
 		target.Set(reflect.ValueOf(value).Convert(target.Type()))
 	}
 	return
