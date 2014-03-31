@@ -2,8 +2,8 @@ package web_request_readers
 
 import (
 	"encoding/json"
-	"github.com/stretchr/goweb/context"
 	codec_services "github.com/stretchr/codecs/services"
+	"github.com/stretchr/goweb/context"
 	"github.com/stretchr/objx"
 	"io/ioutil"
 	"strconv"

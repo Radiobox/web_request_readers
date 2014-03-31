@@ -8,9 +8,9 @@ import (
 	"errors"
 	"github.com/stretchr/objx"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
-	"strconv"
 )
 
 const (
@@ -108,30 +108,30 @@ func getNextOption(remainingTag string) (string, string) {
 	return nextOption, remaining
 }
 
-func getTagAndArgs(fieldType reflect.StructField) (string, []string) {
+func NameAndArgs(fieldType reflect.StructField) (string, []string) {
 	tag := fieldType.Tag.Get("request")
+	name, remaining := getNextOption(tag)
 
-	// This is for situations like `response:"test" request:",option"`
-	// - it will be overridden by the request tag
-	name := fieldType.Tag.Get("response")
-	if name == "" {
-		// Fall back to db tag if it isn't "-"
-		if dbName := fieldType.Tag.Get("db"); dbName != "-" {
-			name = dbName
-		}
-	}
-
-	requestName, remaining := getNextOption(tag)
-	if requestName != "" {
-		name = requestName
-	}
+	// A capacity of 5 seems like a sane default.
 	args := make([]string, 0, 5)
 	var next string
 	for remaining != "" {
 		next, remaining = getNextOption(remaining)
 		args = append(args, next)
 	}
-	return name, args
+
+	if name != "" {
+		return name, args
+	}
+	if name = fieldType.Tag.Get("response"); name != "" {
+		return name, args
+	}
+	// Fall back to db tag if it isn't "-"
+	if name = fieldType.Tag.Get("db"); name != "" && name != "-" {
+		return name, args
+	}
+
+	return strings.ToLower(fieldType.Name), args
 }
 
 // unmarshalToValue is a helper for UnmarshalParams, which keeps track
@@ -151,13 +151,10 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 
 		// Skip unexported fields
 		if unicode.IsUpper(rune(fieldType.Name[0])) {
-			name, args := getTagAndArgs(fieldType)
+			name, args := NameAndArgs(fieldType)
 			switch name {
 			case "-":
 				continue
-			case "":
-				name = strings.ToLower(fieldType.Name)
-				fallthrough
 			default:
 				required := true
 				for _, arg := range args {
