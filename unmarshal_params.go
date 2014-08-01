@@ -193,6 +193,16 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 // setValue takes a target and a value, and updates the target to
 // match the value.
 func setValue(target reflect.Value, value interface{}) (parseErr error) {
+	if value == nil {
+		if target.Kind() != reflect.Ptr {
+			return errors.New("Cannot set non-pointer value to null")
+		}
+		if !target.IsNil() {
+			target.Set(reflect.Zero(target.Type()))
+		}
+		return nil
+	}
+
 	if target.Kind() == reflect.Ptr && target.IsNil() {
 		target.Set(reflect.New(target.Type().Elem()))
 	}
@@ -205,6 +215,10 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 
 	if ok {
 		return receiver.Receive(value)
+	}
+
+	for target.Kind() == reflect.Ptr {
+		target = target.Elem()
 	}
 	targetTypeName := target.Type().Name()
 	if target.Kind() == reflect.Struct && strings.HasPrefix(targetTypeName, SqlNullablePrefix) {
