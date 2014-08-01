@@ -24,6 +24,15 @@ const (
 	SqlNotNullField = "Valid"
 )
 
+// DefaultRequired defines whether or not fields default to a
+// 'required' state.  If this value is true (the default), then you
+// must add "optional" to a field's "request" tag options if you don't
+// want to get errors when it has no corresponding value in a request.
+// If you set it to false, then you must add "required" to a field's
+// "request" tag if you want to receive errors when it has no
+// corresponding value in a request.
+var DefaultRequired = true
+
 // UnmarshalParams takes a series of parameters and unmarshals them to
 // the exported fields of a struct.  The key used to load a value from
 // a request for a field is determined as follows:
@@ -156,10 +165,15 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 			case "-":
 				continue
 			default:
-				required := true
+				required := DefaultRequired
 				for _, arg := range args {
 					if arg == "optional" {
 						required = false
+						break
+					}
+					if arg == "required" {
+						required = true
+						break
 					}
 				}
 				if value, ok := params[name]; ok {
