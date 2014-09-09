@@ -18,3 +18,15 @@ type RequestValueReceiver interface {
 	// value cannot be parsed to the underlying type.
 	Receive(interface{}) error
 }
+
+// A PreReceiver has an action to perform prior to receiving data from
+// a user request.
+type PreReceiver interface {
+	PreReceive() error
+}
+
+// A PostReceiver has an action to perform subsequent to receiving
+// data from a user request.
+type PostReceiver interface {
+	PostReceive() error
+}

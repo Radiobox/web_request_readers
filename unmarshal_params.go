@@ -6,11 +6,12 @@ package web_request_readers
 
 import (
 	"errors"
-	"github.com/stretchr/objx"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/stretchr/objx"
 )
 
 const (
@@ -207,13 +208,36 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 		target.Set(reflect.New(target.Type().Elem()))
 	}
 
-	receiver, ok := target.Interface().(RequestValueReceiver)
-	if !ok && target.CanAddr() {
-		// Try again with the pointer
-		receiver, ok = target.Addr().Interface().(RequestValueReceiver)
+	preReceiver, hasPreReceive := target.Interface().(PreReceiver)
+	receiver, hasReceive := target.Interface().(RequestValueReceiver)
+	postReceiver, hasPostReceive := target.Interface().(PostReceiver)
+	if target.CanAddr() {
+		// If interfaces weren't found, try again with the pointer
+		targetPtr := target.Addr().Interface()
+		if !hasReceive {
+			receiver, hasReceive = targetPtr.(RequestValueReceiver)
+		}
+		if !hasPreReceive {
+			preReceiver, hasPreReceive = targetPtr.(PreReceiver)
+		}
+		if !hasPostReceive {
+			postReceiver, hasPostReceive = targetPtr.(PostReceiver)
+		}
 	}
 
-	if ok {
+	if hasPreReceive {
+		if parseErr = preReceiver.PreReceive(); parseErr != nil {
+			return
+		}
+	}
+	if hasPostReceive {
+		defer func() {
+			if parseErr == nil {
+				parseErr = postReceiver.PostReceive()
+			}
+		}()
+	}
+	if hasReceive {
 		return receiver.Receive(value)
 	}
 
