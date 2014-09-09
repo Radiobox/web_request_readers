@@ -88,9 +88,42 @@ var DefaultRequired = true
 //         }
 //         return target, nil
 //     }
-func UnmarshalParams(params objx.Map, target interface{}) error {
+func UnmarshalParams(params objx.Map, target interface{}) (unmarshalErr error) {
+	preUnmarshaller, hasPreUnmarshal := target.(PreUnmarshaller)
+	unmarshaller, hasUnmarshal := target.(Unmarshaller)
+	postUnmarshaller, hasPostUnmarshal := target.(PostUnmarshaller)
+
 	ptrValue := reflect.ValueOf(target)
 	targetValue := ptrValue.Elem()
+
+	// If interfaces weren't found, try again with the element
+	targetElem := targetValue.Interface()
+	if !hasPreUnmarshal {
+		preUnmarshaller, hasPreUnmarshal = targetElem.(PreUnmarshaller)
+	}
+	if !hasUnmarshal {
+		unmarshaller, hasUnmarshal = targetElem.(Unmarshaller)
+	}
+	if !hasPostUnmarshal {
+		postUnmarshaller, hasPostUnmarshal = targetElem.(PostUnmarshaller)
+	}
+
+	if hasPreUnmarshal {
+		if unmarshalErr = preUnmarshaller.PreUnmarshal(); unmarshalErr != nil {
+			return
+		}
+	}
+	if hasPostUnmarshal {
+		defer func() {
+			if unmarshalErr == nil {
+				unmarshalErr = postUnmarshaller.PostUnmarshal()
+			}
+		}()
+	}
+	if hasUnmarshal {
+		return unmarshaller.Unmarshal(params)
+	}
+
 	missingErr := new(MissingFields)
 	matchedFields, err := unmarshalToValue(params, targetValue, missingErr)
 	if err != nil {
@@ -214,11 +247,11 @@ func setValue(target reflect.Value, value interface{}) (parseErr error) {
 	if target.CanAddr() {
 		// If interfaces weren't found, try again with the pointer
 		targetPtr := target.Addr().Interface()
-		if !hasReceive {
-			receiver, hasReceive = targetPtr.(RequestValueReceiver)
-		}
 		if !hasPreReceive {
 			preReceiver, hasPreReceive = targetPtr.(PreReceiver)
+		}
+		if !hasReceive {
+			receiver, hasReceive = targetPtr.(RequestValueReceiver)
 		}
 		if !hasPostReceive {
 			postReceiver, hasPostReceive = targetPtr.(PostReceiver)
