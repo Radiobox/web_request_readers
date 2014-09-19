@@ -6,6 +6,7 @@ package web_request_readers
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -130,12 +131,38 @@ func UnmarshalParams(params objx.Map, target interface{}) (unmarshalErr error) {
 		return err
 	}
 
-	if matchedFields < len(params) {
-		return errors.New("More parameters passed than this model has fields.")
+	if len(matchedFields) < len(params) {
+		return errExtraParams(matchedFields, params)
 	} else if missingErr.HasMissingFields() {
 		return *missingErr
 	}
 	return nil
+}
+
+// errExtraParams tells user which params did not match an exported field.
+func errExtraParams(fields []string, params objx.Map) error {
+	extra := make([]string, 0, 0)
+
+	for k, _ := range map[string]interface{}(params) {
+		if contains(fields, k) == false {
+			extra = append(extra, k)
+		}
+	}
+
+	err := fmt.Sprintf("Unrecognized parameters: %v", strings.Join(extra, ","))
+	return errors.New(err)
+}
+
+// contains looks to see if a list contains a value.
+// The func is inefficient, but field size is < 10 in most cases.
+func contains(list []string, key string) bool {
+	for _, b := range list {
+		if b == key {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getNextOption(remainingTag string) (string, string) {
@@ -180,15 +207,17 @@ func NameAndArgs(fieldType reflect.StructField) (string, []string) {
 // unmarshalToValue is a helper for UnmarshalParams, which keeps track
 // of the total number of fields matched in a request and which fields
 // were missing from a request.
-func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *MissingFields) (matchedFields int, parseErr error) {
+func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *MissingFields) (matchedFields []string, parseErr error) {
+	matchedFields = make([]string, 0, 0)
+
 	targetType := targetValue.Type()
 	for i := 0; i < targetValue.NumField() && parseErr == nil; i++ {
 		field := targetValue.Field(i)
 		fieldType := targetType.Field(i)
 		if fieldType.Anonymous {
-			var embeddedCount int
-			embeddedCount, parseErr = unmarshalToValue(params, field, missingErr)
-			matchedFields += embeddedCount
+			var embeddedFields []string
+			embeddedFields, parseErr = unmarshalToValue(params, field, missingErr)
+			matchedFields = append(matchedFields, embeddedFields...)
 			continue
 		}
 
@@ -211,7 +240,7 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 					}
 				}
 				if value, ok := params[name]; ok {
-					matchedFields++
+					matchedFields = append(matchedFields, name)
 					parseErr = setValue(field, value)
 				} else if required {
 					missingErr.AddMissingField(name)
