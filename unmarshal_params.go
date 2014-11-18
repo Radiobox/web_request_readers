@@ -200,14 +200,12 @@ func unmarshalToValue(params objx.Map, targetValue reflect.Value, missingErr *Mi
 				continue
 			default:
 				required := DefaultRequired
+				immutable := false
 				for _, arg := range args {
 					if arg == "optional" {
 						required = false
-						break
-					}
-					if arg == "required" {
+					} else if arg == "required" {
 						required = true
-						break
 					}
 				}
 				if value, ok := params[name]; ok {
